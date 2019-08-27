@@ -53,7 +53,45 @@ namespace GeneralAutoTestUI
                 }
             }
         }
-
+        public static void GenerateColumnFromClassWithDefaultEditor(this SuperGridControl ctl, Type target, int readonlyCol = 0)
+        {
+            if (ctl == null || target == null)
+                return;
+            ctl.PrimaryGrid.Columns.Clear();
+            PropertyInfo[] classPropertyInfo;
+            classPropertyInfo = target.GetProperties(BindingFlags.Public | BindingFlags.Instance);//获得属性名
+            if (classPropertyInfo == null || classPropertyInfo.Length < 1)
+                return;
+            string catKey = "";
+            string editorType = "";
+            for (int i = 0; i < classPropertyInfo.Length; i++)
+            {
+                Type t = classPropertyInfo[i].PropertyType; // t will be System.String
+                editorType = t.ToString();
+                object[] objs = classPropertyInfo[i].GetCustomAttributes(typeof(DescriptionAttribute), true);
+                if (objs != null && objs.Length > 0)
+                {
+                    catKey = ((DescriptionAttribute)objs[0]).Description;
+                    if (string.IsNullOrEmpty(catKey))
+                        catKey = string.Format("列{0}", i + 1);
+                    //continue;
+                    GridColumn col = new GridColumn(catKey);
+                    if (i == readonlyCol)
+                        col.ReadOnly = true;
+                    col.DataPropertyName = classPropertyInfo[i].Name;
+                    if (editorType == "System.Boolean")
+                        col.EditorType = typeof(GridCheckBoxXEditControl);
+                    else if (editorType == "System.Int32")
+                        col.EditorType = typeof(GridNumericUpDownEditControl);
+                    else if (editorType == "System.Single")
+                        col.EditorType = typeof(GridDoubleInputEditControl);
+                    else
+                        col.EditorType = typeof(GridTextBoxXEditControl);
+                    ctl.PrimaryGrid.Columns.Add(col);
+                }
+            }
+        }
+        
         public static void FullScreenGridControlInWidth(this SuperGridControl ctl)
         {
             /**************************计算公式**********************************************/
